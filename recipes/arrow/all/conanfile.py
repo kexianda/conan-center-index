@@ -232,7 +232,7 @@ class ArrowConan(ConanFile):
         if self.options.with_json:
             self.requires("rapidjson/1.1.0")
         if self._with_llvm():
-            self.requires("llvm-core/[>=11.1.0]")
+            self.requires("llvm-core/12.0.0")
         if self._with_openssl():
             self.requires("openssl/1.1.1h")
         if self.options.with_s3:
