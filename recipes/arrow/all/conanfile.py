@@ -238,7 +238,7 @@ class ArrowConan(ConanFile):
         if self._with_llvm():
             self.requires("llvm-core/12.0.0")
         if self._with_openssl():
-            self.requires("openssl/1.1.1k")
+            self.requires("openssl/1.1.1l")
         if self.options.with_s3:
             self.requires("aws-sdk-cpp/1.7.299")
         if self.options.with_brotli:
