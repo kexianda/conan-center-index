@@ -1,6 +1,6 @@
 --- cpp/CMakeLists.txt
 +++ cpp/CMakeLists.txt
-@@ -844,6 +844,7 @@ if(ARROW_BUILD_BENCHMARKS)
+@@ -843,6 +843,7 @@ if(ARROW_BUILD_BENCHMARKS)
  endif()
  
  if(ARROW_JEMALLOC)
@@ -9,17 +9,6 @@
    add_definitions(-DARROW_JEMALLOC_INCLUDE_DIR=${JEMALLOC_INCLUDE_DIR})
    list(APPEND ARROW_LINK_LIBS jemalloc::jemalloc)
 
---- cpp/cmake_modules/DefineOptions.cmake
-+++ cpp/cmake_modules/DefineOptions.cmake
-@@ -76,7 +76,7 @@ macro(define_option_string name description default)
- endmacro()
- 
- # Top level cmake dir
--if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-+if(1)
-   #----------------------------------------------------------------------
-   set_option_category("Compile and link")
- 
 --- cpp/cmake_modules/ThirdpartyToolchain.cmake
 +++ cpp/cmake_modules/ThirdpartyToolchain.cmake
 @@ -1484,7 +1484,7 @@ endif()
@@ -31,18 +20,17 @@
    message(STATUS "Building (vendored) jemalloc from source")
    # We only use a vendored jemalloc as we want to control its version.
    # Also our build of jemalloc is specially prefixed so that it will not
-@@ -1940,10 +1940,16 @@ endmacro()
+@@ -1925,10 +1925,15 @@ endmacro()
  
- if((NOT ARROW_SIMD_LEVEL STREQUAL "NONE")
-    OR (NOT ARROW_RUNTIME_SIMD_LEVEL STREQUAL "NONE"))
+ if((NOT ARROW_SIMD_LEVEL STREQUAL "NONE") OR (NOT ARROW_RUNTIME_SIMD_LEVEL STREQUAL "NONE"
+                                              ))
 -  set(xsimd_SOURCE "BUNDLED")
 -  resolve_dependency(xsimd)
 -  # TODO: Don't use global includes but rather target_include_directories
 -  include_directories(SYSTEM ${XSIMD_INCLUDE_DIR})
-+
 +  find_package(xsimd REQUIRED)
 +  if (xsimd_FOUND)
-+      include_directories(SYSTEM ${xsimd_INCLUDE_DIR})
++    include_directories(SYSTEM ${xsimd_INCLUDE_DIR})
 +  else()
 +    set(xsimd_SOURCE "BUNDLED")
 +    resolve_dependency(xsimd)
@@ -67,7 +55,7 @@
 
 --- cpp/src/arrow/memory_pool.cc
 +++ cpp/src/arrow/memory_pool.cc
-@@ -39,7 +39,7 @@
+@@ -48,7 +48,7 @@
  // Needed to support jemalloc 3 and 4
  #define JEMALLOC_MANGLE
  // Explicitly link to our version of jemalloc
@@ -106,36 +94,32 @@
 -set(GANDIVA_STATIC_LINK_LIBS arrow_static LLVM::LLVM_INTERFACE ${GANDIVA_OPENSSL_LIBS})
 +set(GANDIVA_STATIC_LINK_LIBS arrow_static llvm-core::llvm-core ${GANDIVA_OPENSSL_LIBS})
  
- if(ARROW_GANDIVA_STATIC_LIBSTDCPP
-    AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX))
+ if(ARROW_GANDIVA_STATIC_LIBSTDCPP AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX
+                                       ))
 @@ -136,7 +144,7 @@ add_arrow_lib(gandiva
                arrow_dependencies
                precompiled
                EXTRA_INCLUDES
 -              $<TARGET_PROPERTY:LLVM::LLVM_INTERFACE,INTERFACE_INCLUDE_DIRECTORIES>
-+              lvm-core_INCLUDE_DIRECTORIES
++              $<TARGET_PROPERTY:llvm-core::core,INTERFACE_INCLUDE_DIRECTORIES>
                ${GANDIVA_OPENSSL_INCLUDE_DIR}
+               ${UTF8PROC_INCLUDE_DIR}
                SHARED_LINK_FLAGS
-               ${GANDIVA_SHARED_LINK_FLAGS}
-@@ -209,7 +217,7 @@ endfunction()
- 
- set(GANDIVA_INTERNALS_TEST_ARGUMENTS)
- if(WIN32)
--  list(APPEND GANDIVA_INTERNALS_TEST_ARGUMENTS EXTRA_LINK_LIBS LLVM::LLVM_INTERFACE
-+  list(APPEND GANDIVA_INTERNALS_TEST_ARGUMENTS EXTRA_LINK_LIBS llvm-core::llvm-core
-               ${GANDIVA_OPENSSL_LIBS})
+@@ -213,7 +221,7 @@ if(WIN32)
+   list(APPEND
+        GANDIVA_INTERNALS_TEST_ARGUMENTS
+        EXTRA_LINK_LIBS
+-       LLVM::LLVM_INTERFACE
++       llvm-core::llvm-core
+        ${GANDIVA_OPENSSL_LIBS})
  endif()
  add_gandiva_test(internals-test
-@@ -234,10 +242,10 @@ add_gandiva_test(internals-test
-                  hash_utils_test.cc
-                  gdv_function_stubs_test.cc
-                  EXTRA_DEPENDENCIES
--                 LLVM::LLVM_INTERFACE
-+                 llvm-core::llvm-core
+@@ -241,7 +249,7 @@ add_gandiva_test(internals-test
+                  LLVM::LLVM_INTERFACE
                   ${GANDIVA_OPENSSL_LIBS}
                   EXTRA_INCLUDES
 -                 $<TARGET_PROPERTY:LLVM::LLVM_INTERFACE,INTERFACE_INCLUDE_DIRECTORIES>
-+                 lvm-core_INCLUDE_DIRECTORIES
++                 $<TARGET_PROPERTY:llvm-core::core,INTERFACE_INCLUDE_DIRECTORIES>
                   ${GANDIVA_INTERNALS_TEST_ARGUMENTS}
-                  ${GANDIVA_OPENSSL_INCLUDE_DIR})
- 
+                  ${GANDIVA_OPENSSL_INCLUDE_DIR}
+                  ${UTF8PROC_INCLUDE_DIR})

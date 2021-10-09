@@ -1,14 +1,6 @@
 --- cpp/CMakeLists.txt
 +++ cpp/CMakeLists.txt
-@@ -103,6 +103,7 @@ set(ARROW_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
- set(ARROW_DOC_DIR "share/doc/${PROJECT_NAME}")
- 
- set(ARROW_LLVM_VERSIONS
-+    "12.0.0"
-     "11.1"
-     "11.0"
-     "10"
-@@ -837,6 +838,7 @@ if(ARROW_BUILD_BENCHMARKS)
+@@ -844,6 +844,7 @@ if(ARROW_BUILD_BENCHMARKS)
  endif()
  
  if(ARROW_JEMALLOC)
@@ -27,9 +19,11 @@
    #----------------------------------------------------------------------
    set_option_category("Compile and link")
  
---- cpp/cmake_modules/ThirdpartyToolchain.cmake
-+++ cpp/cmake_modules/ThirdpartyToolchain.cmake
-@@ -1478,7 +1478,7 @@ if(ARROW_WITH_PROTOBUF)
+diff --git a/cpp/cmake_modules/ThirdpartyToolchain.cmake b/cpp/cmake_modules/ThirdpartyToolchain.cmake
+index 83ea3aa9b..bb7f737ae 100644
+--- a/cpp/cmake_modules/ThirdpartyToolchain.cmake
++++ b/cpp/cmake_modules/ThirdpartyToolchain.cmake
+@@ -1476,7 +1476,7 @@ if(ARROW_WITH_PROTOBUF)
    message(STATUS "Found protoc: ${PROTOBUF_PROTOC_EXECUTABLE}")
    # Protobuf_PROTOC_LIBRARY is set by all versions of FindProtobuf.cmake
    message(STATUS "Found libprotoc: ${Protobuf_PROTOC_LIBRARY}")
@@ -38,7 +32,7 @@
    message(STATUS "Found libprotobuf: ${PROTOBUF_LIBRARY}")
    message(STATUS "Found protobuf headers: ${PROTOBUF_INCLUDE_DIR}")
  endif()
-@@ -1486,7 +1486,7 @@ endif()
+@@ -1484,7 +1484,7 @@ endif()
  # ----------------------------------------------------------------------
  # jemalloc - Unix-only high-performance allocator
  
@@ -47,9 +41,41 @@
    message(STATUS "Building (vendored) jemalloc from source")
    # We only use a vendored jemalloc as we want to control its version.
    # Also our build of jemalloc is specially prefixed so that it will not
+@@ -1940,10 +1940,16 @@ endmacro()
+ 
+ if((NOT ARROW_SIMD_LEVEL STREQUAL "NONE")
+    OR (NOT ARROW_RUNTIME_SIMD_LEVEL STREQUAL "NONE"))
+-  set(xsimd_SOURCE "BUNDLED")
+-  resolve_dependency(xsimd)
+-  # TODO: Don't use global includes but rather target_include_directories
+-  include_directories(SYSTEM ${XSIMD_INCLUDE_DIR})
++
++  find_package(xsimd REQUIRED)
++  if (xsimd_FOUND)
++      include_directories(SYSTEM ${xsimd_INCLUDE_DIR})
++  else()
++    set(xsimd_SOURCE "BUNDLED")
++    resolve_dependency(xsimd)
++    # TODO: Don't use global includes but rather target_include_directories
++    include_directories(SYSTEM ${XSIMD_INCLUDE_DIR})
++  endif()
+ endif()
+ 
+ macro(build_zlib)
+--- cpp/src/arrow/io/CMakeLists.txt
++++ cpp/src/arrow/io/CMakeLists.txt
+@@ -30,7 +30,7 @@ add_arrow_test(memory_test PREFIX "arrow-io")
+ 
+ add_arrow_benchmark(file_benchmark PREFIX "arrow-io")
+ 
+-if(NOT (${ARROW_SIMD_LEVEL} STREQUAL "NONE"))
++if(NOT ARROW_SIMD_LEVEL STREQUAL "NONE")
+   # This benchmark either requires SSE4.2 or ARMV8 SIMD to be enabled
+   add_arrow_benchmark(memory_benchmark PREFIX "arrow-io")
+ endif()
 --- cpp/src/arrow/memory_pool.cc
 +++ cpp/src/arrow/memory_pool.cc
-@@ -35,7 +35,7 @@
+@@ -39,7 +39,7 @@
  // Needed to support jemalloc 3 and 4
  #define JEMALLOC_MANGLE
  // Explicitly link to our version of jemalloc
@@ -60,7 +86,7 @@
  #ifdef ARROW_MIMALLOC
 --- cpp/src/gandiva/CMakeLists.txt
 +++ cpp/src/gandiva/CMakeLists.txt
-@@ -25,7 +25,16 @@ add_custom_target(gandiva-benchmarks)
+@@ -25,7 +25,15 @@ add_custom_target(gandiva-benchmarks)
  
  add_dependencies(gandiva-all gandiva gandiva-tests gandiva-benchmarks)
  
@@ -73,49 +99,49 @@
 +endif()
 +string(REPLACE "." ";" VERSION_LIST ${llvm-core_VERSION})
 +list(GET VERSION_LIST 0 LLVM_VERSION_MAJOR)
-+
  
  if(LLVM_VERSION_MAJOR LESS "10")
    set(GANDIVA_CXX_STANDARD ${CMAKE_CXX_STANDARD})
-@@ -89,9 +98,9 @@ set(SRC_FILES
+@@ -92,10 +100,10 @@ set(SRC_FILES
      random_generator_holder.cc
      ${GANDIVA_PRECOMPILED_CC_PATH})
  
--set(GANDIVA_SHARED_PRIVATE_LINK_LIBS arrow_shared LLVM::LLVM_INTERFACE)
-+set(GANDIVA_SHARED_PRIVATE_LINK_LIBS arrow_shared llvm-core::llvm-core)
+-set(GANDIVA_SHARED_PRIVATE_LINK_LIBS arrow_shared LLVM::LLVM_INTERFACE
++set(GANDIVA_SHARED_PRIVATE_LINK_LIBS arrow_shared llvm-core::llvm-core
+                                      ${GANDIVA_OPENSSL_LIBS})
  
--set(GANDIVA_STATIC_LINK_LIBS arrow_static LLVM::LLVM_INTERFACE)
-+set(GANDIVA_STATIC_LINK_LIBS arrow_static llvm-core::llvm-core)
+-set(GANDIVA_STATIC_LINK_LIBS arrow_static LLVM::LLVM_INTERFACE ${GANDIVA_OPENSSL_LIBS})
++set(GANDIVA_STATIC_LINK_LIBS arrow_static llvm-core::llvm-core ${GANDIVA_OPENSSL_LIBS})
  
  if(ARROW_GANDIVA_STATIC_LIBSTDCPP
     AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX))
-@@ -132,7 +141,7 @@ add_arrow_lib(gandiva
+@@ -136,7 +144,7 @@ add_arrow_lib(gandiva
                arrow_dependencies
                precompiled
                EXTRA_INCLUDES
 -              $<TARGET_PROPERTY:LLVM::LLVM_INTERFACE,INTERFACE_INCLUDE_DIRECTORIES>
 +              $<TARGET_PROPERTY:llvm-core::core,INTERFACE_INCLUDE_DIRECTORIES>
+               ${GANDIVA_OPENSSL_INCLUDE_DIR}
                SHARED_LINK_FLAGS
                ${GANDIVA_SHARED_LINK_FLAGS}
-               SHARED_LINK_LIBS
-@@ -204,7 +213,7 @@ endfunction()
+@@ -209,7 +217,7 @@ endfunction()
  
  set(GANDIVA_INTERNALS_TEST_ARGUMENTS)
  if(WIN32)
--  list(APPEND GANDIVA_INTERNALS_TEST_ARGUMENTS EXTRA_LINK_LIBS LLVM::LLVM_INTERFACE)
-+  list(APPEND GANDIVA_INTERNALS_TEST_ARGUMENTS EXTRA_LINK_LIBS llvm-core::llvm-core)
+-  list(APPEND GANDIVA_INTERNALS_TEST_ARGUMENTS EXTRA_LINK_LIBS LLVM::LLVM_INTERFACE
++  list(APPEND GANDIVA_INTERNALS_TEST_ARGUMENTS EXTRA_LINK_LIBS llvm-core::llvm-core
+               ${GANDIVA_OPENSSL_LIBS})
  endif()
  add_gandiva_test(internals-test
-                  SOURCES
-@@ -227,9 +236,9 @@ add_gandiva_test(internals-test
-                  random_generator_holder_test.cc
+@@ -234,10 +242,10 @@ add_gandiva_test(internals-test
+                  hash_utils_test.cc
                   gdv_function_stubs_test.cc
                   EXTRA_DEPENDENCIES
 -                 LLVM::LLVM_INTERFACE
 +                 llvm-core::llvm-core
+                  ${GANDIVA_OPENSSL_LIBS}
                   EXTRA_INCLUDES
 -                 $<TARGET_PROPERTY:LLVM::LLVM_INTERFACE,INTERFACE_INCLUDE_DIRECTORIES>
 +                 $<TARGET_PROPERTY:llvm-core::core,INTERFACE_INCLUDE_DIRECTORIES>
-                  ${GANDIVA_INTERNALS_TEST_ARGUMENTS})
- 
- if(ARROW_GANDIVA_JAVA)
+                  ${GANDIVA_INTERNALS_TEST_ARGUMENTS}
+                  ${GANDIVA_OPENSSL_INCLUDE_DIR})

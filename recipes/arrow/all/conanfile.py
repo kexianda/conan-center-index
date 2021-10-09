@@ -88,7 +88,7 @@ class ArrowConan(ConanFile):
         "with_protobuf": "auto",
         "with_re2": "auto",
         "with_s3": False,
-        "with_utf8proc": "auto",
+        "with_utf8proc": True,
         "with_lz4": False,
         "with_snappy": False,
         "with_zlib": False,
@@ -262,6 +262,8 @@ class ArrowConan(ConanFile):
             self.requires("re2/20201101")
         if self.options.runtime_simd_level is not None:
             self.requires("xsimd/7.5.0")
+        if self._with_utf8proc():
+            self.requires("utf8proc/2.6.1")
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version],
@@ -464,7 +466,7 @@ class ArrowConan(ConanFile):
         if self._with_protobuf():
             self.cpp_info.components["libarrow"].requires.append("protobuf::protobuf")
         if self._with_utf8proc():
-            self.cpp_info.components["libarrow"].requires.append("uff8proc::uff8proc")
+            self.cpp_info.components["libarrow"].requires.append("utf8proc::utf8proc")
         if self._with_llvm():
             self.cpp_info.components["libarrow"].requires.append("llvm-core::llvm-core")
         if self._with_thrift():
