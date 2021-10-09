@@ -221,11 +221,11 @@ class ArrowConan(ConanFile):
         if self.options.with_backtrace:
             raise ConanInvalidConfiguration("CCI has no backtrace recipe (yet)")
         if self._with_protobuf():
-            self.requires("protobuf/3.12.4")
+            self.requires("protobuf/3.16.0")
         if self._with_jemalloc():
             self.requires("jemalloc/5.2.1")
         if self._with_boost():
-            self.requires("boost/1.74.0")
+            self.requires("boost/1.76.0")
         if self.options.with_cuda:
             raise ConanInvalidConfiguration("CCI has no cuda recipe (yet)")
         if self.options.with_flight_rpc:
@@ -251,13 +251,13 @@ class ArrowConan(ConanFile):
         if self.options.with_orc:
             raise ConanInvalidConfiguration("CCI has no orc recipe (yet)")
         if self.options.with_lz4:
-            self.requires("lz4/1.9.2")
+            self.requires("lz4/1.9.3")
         if self.options.with_snappy:
             self.requires("snappy/1.1.8")
         if self.options.with_zlib:
             self.requires("zlib/1.2.11")
         if self.options.with_zstd:
-            self.requires("zstd/1.4.9")
+            self.requires("zstd/1.5.0")
         if self._with_re2():
             self.requires("re2/20201101")
         if self.options.runtime_simd_level is not None:

@@ -11,6 +11,9 @@ sources:
   "4.0.0":
     url: "https://github.com/apache/arrow/archive/apache-arrow-4.0.0.tar.gz"
     sha256: "a27971e2a71c412ae43d998b7b6d06201c7a3da382c804dcdc4a8126ccbabe67"
+  "5.0.0":
+    url: "https://github.com/apache/arrow/archive/apache-arrow-5.0.0.tar.gz"
+    sha256: "ec3bdae6ccc08de5b5adcf9cbe7cbc085cab0ba06c8e6d3abfc3ed1cd4c1c9a2"
 patches:
   "1.0.0":
     - base_path: "source_subfolder"
@@ -40,6 +43,9 @@ patches:
     - base_path: "source_subfolder"
       patch_file: "patches/3.0.0-0001-fix-and-gandiva-support.patch"
   "4.0.0":
+    - base_path: "source_subfolder"
+      patch_file: "patches/4.0.0-0001-fix.patch"
+  "5.0.0":
     - base_path: "source_subfolder"
       patch_file: "patches/4.0.0-0001-fix.patch"
   
