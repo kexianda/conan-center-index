@@ -5,6 +5,9 @@ sources:
   "2.0.0":
     url: "https://github.com/apache/arrow/archive/apache-arrow-2.0.0.tar.gz"
     sha256: "ea299df9cf440cfc43393ce12ee6d9a4c9d0dfa9fde33c3bc9b70ec25520a844"
+  "3.0.0":
+    url: "https://github.com/apache/arrow/archive/apache-arrow-3.0.0.tar.gz"
+    sha256: "fc461c4f0a60e7470a7c58b28e9344aa8fb0be5cc982e9658970217e084c3a82"
 patches:
   "1.0.0":
     - base_path: "source_subfolder"
@@ -30,4 +33,6 @@ patches:
       patch_file: "patches/2.0.0-0006-gandiva-llvm-re2.patch"
     - base_path: "source_subfolder"
       patch_file: "patches/2.0.0-0007-fix-protoc-cmake.patch"
-
+  "3.0.0":
+    - base_path: "source_subfolder"
+      patch_file: "patches/3.0.0-0001-fix-and-gandiva-support.patch"

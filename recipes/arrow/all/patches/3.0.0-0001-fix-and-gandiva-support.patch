@@ -1,0 +1,131 @@
+diff --git a/cpp/CMakeLists.txt b/cpp/CMakeLists.txt
+index f6818d9ee..180396c06 100644
+--- a/cpp/CMakeLists.txt
++++ b/cpp/CMakeLists.txt
+@@ -103,6 +103,7 @@ set(ARROW_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+ set(ARROW_DOC_DIR "share/doc/${PROJECT_NAME}")
+ 
+ set(ARROW_LLVM_VERSIONS
++    "12.0.0"
+     "11.1"
+     "11.0"
+     "10"
+@@ -837,6 +838,7 @@ if(ARROW_BUILD_BENCHMARKS)
+ endif()
+ 
+ if(ARROW_JEMALLOC)
++  find_package(jemalloc REQUIRED)
+   add_definitions(-DARROW_JEMALLOC)
+   add_definitions(-DARROW_JEMALLOC_INCLUDE_DIR=${JEMALLOC_INCLUDE_DIR})
+   list(APPEND ARROW_LINK_LIBS jemalloc::jemalloc)
+diff --git a/cpp/cmake_modules/DefineOptions.cmake b/cpp/cmake_modules/DefineOptions.cmake
+index e4df40d61..86a825172 100644
+--- a/cpp/cmake_modules/DefineOptions.cmake
++++ b/cpp/cmake_modules/DefineOptions.cmake
+@@ -76,7 +76,7 @@ macro(define_option_string name description default)
+ endmacro()
+ 
+ # Top level cmake dir
+-if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
++if(1)
+   #----------------------------------------------------------------------
+   set_option_category("Compile and link")
+ 
+diff --git a/cpp/cmake_modules/ThirdpartyToolchain.cmake b/cpp/cmake_modules/ThirdpartyToolchain.cmake
+index 961edac18..b72ae91e2 100644
+--- a/cpp/cmake_modules/ThirdpartyToolchain.cmake
++++ b/cpp/cmake_modules/ThirdpartyToolchain.cmake
+@@ -1478,7 +1478,7 @@ if(ARROW_WITH_PROTOBUF)
+   message(STATUS "Found protoc: ${PROTOBUF_PROTOC_EXECUTABLE}")
+   # Protobuf_PROTOC_LIBRARY is set by all versions of FindProtobuf.cmake
+   message(STATUS "Found libprotoc: ${Protobuf_PROTOC_LIBRARY}")
+-  get_target_property(PROTOBUF_LIBRARY ${ARROW_PROTOBUF_LIBPROTOBUF} IMPORTED_LOCATION)
++  # get_target_property(PROTOBUF_LIBRARY ${ARROW_PROTOBUF_LIBPROTOBUF} IMPORTED_LOCATION)
+   message(STATUS "Found libprotobuf: ${PROTOBUF_LIBRARY}")
+   message(STATUS "Found protobuf headers: ${PROTOBUF_INCLUDE_DIR}")
+ endif()
+@@ -1486,7 +1486,7 @@ endif()
+ # ----------------------------------------------------------------------
+ # jemalloc - Unix-only high-performance allocator
+ 
+-if(ARROW_JEMALLOC)
++if(0)
+   message(STATUS "Building (vendored) jemalloc from source")
+   # We only use a vendored jemalloc as we want to control its version.
+   # Also our build of jemalloc is specially prefixed so that it will not
+diff --git a/cpp/src/arrow/memory_pool.cc b/cpp/src/arrow/memory_pool.cc
+index 9b7535cc6..f4d758102 100644
+--- a/cpp/src/arrow/memory_pool.cc
++++ b/cpp/src/arrow/memory_pool.cc
+@@ -35,7 +35,7 @@
+ // Needed to support jemalloc 3 and 4
+ #define JEMALLOC_MANGLE
+ // Explicitly link to our version of jemalloc
+-#include "jemalloc_ep/dist/include/jemalloc/jemalloc.h"
++#include "jemalloc/jemalloc.h"
+ #endif
+ 
+ #ifdef ARROW_MIMALLOC
+diff --git a/cpp/src/gandiva/CMakeLists.txt b/cpp/src/gandiva/CMakeLists.txt
+index 8a19ee585..3ef258d1d 100644
+--- a/cpp/src/gandiva/CMakeLists.txt
++++ b/cpp/src/gandiva/CMakeLists.txt
+@@ -25,7 +25,16 @@ add_custom_target(gandiva-benchmarks)
+ 
+ add_dependencies(gandiva-all gandiva gandiva-tests gandiva-benchmarks)
+ 
++# Now LLVMAlt is only for finding clang/llvm-link
+ find_package(LLVMAlt REQUIRED)
++ 
++find_package(llvm-core REQUIRED)
++if ( NOT ${llvm-core_VERSION} VERSION_LESS "10.0.0")
++  set(GANDIVA_CXX_STANDARD 14)
++endif()
++string(REPLACE "." ";" VERSION_LIST ${llvm-core_VERSION})
++list(GET VERSION_LIST 0 LLVM_VERSION_MAJOR)
++
+ 
+ if(LLVM_VERSION_MAJOR LESS "10")
+   set(GANDIVA_CXX_STANDARD ${CMAKE_CXX_STANDARD})
+@@ -89,9 +98,9 @@ set(SRC_FILES
+     random_generator_holder.cc
+     ${GANDIVA_PRECOMPILED_CC_PATH})
+ 
+-set(GANDIVA_SHARED_PRIVATE_LINK_LIBS arrow_shared LLVM::LLVM_INTERFACE)
++set(GANDIVA_SHARED_PRIVATE_LINK_LIBS arrow_shared llvm-core::llvm-core)
+ 
+-set(GANDIVA_STATIC_LINK_LIBS arrow_static LLVM::LLVM_INTERFACE)
++set(GANDIVA_STATIC_LINK_LIBS arrow_static llvm-core::llvm-core)
+ 
+ if(ARROW_GANDIVA_STATIC_LIBSTDCPP
+    AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX))
+@@ -132,7 +141,7 @@ add_arrow_lib(gandiva
+               arrow_dependencies
+               precompiled
+               EXTRA_INCLUDES
+-              $<TARGET_PROPERTY:LLVM::LLVM_INTERFACE,INTERFACE_INCLUDE_DIRECTORIES>
++              $<TARGET_PROPERTY:llvm-core::core,INTERFACE_INCLUDE_DIRECTORIES>
+               SHARED_LINK_FLAGS
+               ${GANDIVA_SHARED_LINK_FLAGS}
+               SHARED_LINK_LIBS
+@@ -204,7 +213,7 @@ endfunction()
+ 
+ set(GANDIVA_INTERNALS_TEST_ARGUMENTS)
+ if(WIN32)
+-  list(APPEND GANDIVA_INTERNALS_TEST_ARGUMENTS EXTRA_LINK_LIBS LLVM::LLVM_INTERFACE)
++  list(APPEND GANDIVA_INTERNALS_TEST_ARGUMENTS EXTRA_LINK_LIBS llvm-core::llvm-core)
+ endif()
+ add_gandiva_test(internals-test
+                  SOURCES
+@@ -227,9 +236,9 @@ add_gandiva_test(internals-test
+                  random_generator_holder_test.cc
+                  gdv_function_stubs_test.cc
+                  EXTRA_DEPENDENCIES
+-                 LLVM::LLVM_INTERFACE
++                 llvm-core::llvm-core
+                  EXTRA_INCLUDES
+-                 $<TARGET_PROPERTY:LLVM::LLVM_INTERFACE,INTERFACE_INCLUDE_DIRECTORIES>
++                 $<TARGET_PROPERTY:llvm-core::core,INTERFACE_INCLUDE_DIRECTORIES>
+                  ${GANDIVA_INTERNALS_TEST_ARGUMENTS})
+ 
+ if(ARROW_GANDIVA_JAVA)
