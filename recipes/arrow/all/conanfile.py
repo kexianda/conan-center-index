@@ -260,6 +260,10 @@ class ArrowConan(ConanFile):
             self.requires("zstd/1.4.9")
         if self._with_re2():
             self.requires("re2/20201101")
+        if self.options.runtime_simd_level is not None:
+            self.requires("xsimd/7.5.0")
+        if self._with_utf8proc():
+            self.requires("utf8proc/2.6.1")
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version],
@@ -491,3 +495,5 @@ class ArrowConan(ConanFile):
             self.cpp_info.components["libarrow"].requires.append("zlib::zlib")
         if self.options.with_zstd:
             self.cpp_info.components["libarrow"].requires.append("zstd::zstd")
+        if self.options.runtime_simd_level is not None:
+            self.cpp_info.components["libarrow"].requires.append("xsimd::xsimd")
