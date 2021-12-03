@@ -8,9 +8,17 @@
    add_definitions(-DARROW_JEMALLOC)
    add_definitions(-DARROW_JEMALLOC_INCLUDE_DIR=${JEMALLOC_INCLUDE_DIR})
    list(APPEND ARROW_LINK_LIBS jemalloc::jemalloc)
-
 --- cpp/cmake_modules/ThirdpartyToolchain.cmake
 +++ cpp/cmake_modules/ThirdpartyToolchain.cmake
+@@ -1476,7 +1476,7 @@ if(ARROW_WITH_PROTOBUF)
+   message(STATUS "Found protoc: ${PROTOBUF_PROTOC_EXECUTABLE}")
+   # Protobuf_PROTOC_LIBRARY is set by all versions of FindProtobuf.cmake
+   message(STATUS "Found libprotoc: ${Protobuf_PROTOC_LIBRARY}")
+-  get_target_property(PROTOBUF_LIBRARY ${ARROW_PROTOBUF_LIBPROTOBUF} IMPORTED_LOCATION)
++  # get_target_property(PROTOBUF_LIBRARY ${ARROW_PROTOBUF_LIBPROTOBUF} IMPORTED_LOCATION)
+   message(STATUS "Found libprotobuf: ${PROTOBUF_LIBRARY}")
+   message(STATUS "Found protobuf headers: ${PROTOBUF_INCLUDE_DIR}")
+ endif()
 @@ -1484,7 +1484,7 @@ endif()
  # ----------------------------------------------------------------------
  # jemalloc - Unix-only high-performance allocator
@@ -40,6 +48,26 @@
  endif()
  
  macro(build_zlib)
+@@ -2156,12 +2161,13 @@ if(ARROW_WITH_RE2)
+   # Don't specify "PC_PACKAGE_NAMES re2" here because re2.pc may
+   # include -std=c++11. It's not compatible with C source and C++
+   # source not uses C++ 11.
+-  resolve_dependency(re2 HAVE_ALT TRUE)
+-  if(${re2_SOURCE} STREQUAL "SYSTEM")
+-    get_target_property(RE2_LIB re2::re2 IMPORTED_LOCATION)
+-    string(APPEND ARROW_PC_LIBS_PRIVATE " ${RE2_LIB}")
+-  endif()
+-  add_definitions(-DARROW_WITH_RE2)
++  find_package(re2 REQUIRED)
++  # resolve_dependency(re2 HAVE_ALT TRUE)
++  # if(${re2_SOURCE} STREQUAL "SYSTEM")
++  #   get_target_property(RE2_LIB re2::re2 IMPORTED_LOCATION)
++  #   string(APPEND ARROW_PC_LIBS_PRIVATE " ${RE2_LIB}")
++  # endif()
++  # add_definitions(-DARROW_WITH_RE2)
+ 
+   # TODO: Don't use global includes but rather target_include_directories
+   get_target_property(RE2_INCLUDE_DIR re2::re2 INTERFACE_INCLUDE_DIRECTORIES)
 
 --- cpp/src/arrow/io/CMakeLists.txt
 +++ cpp/src/arrow/io/CMakeLists.txt
