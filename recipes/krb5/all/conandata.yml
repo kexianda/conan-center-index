@@ -1,0 +1,7 @@
+sources:
+  "1.18.2":
+    url: "https://github.com/krb5/krb5/archive/refs/tags/krb5-1.18.2-final.tar.gz"
+    sha256: "3a92fb44d06a60a79c71a031a528246bf4cf3badad150a2b91dfa7c4702c6c19"
+  "1.20.0":
+    url: "https://github.com/krb5/krb5/archive/refs/tags/krb5-1.20-final.tar.gz"
+    sha256: "cbbf7ff2fb25d44cf3ed6fee120c073cd291af2bdcc3f466433f0482e238fb59"
