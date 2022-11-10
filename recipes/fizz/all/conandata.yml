@@ -1,0 +1,9 @@
+sources:
+  "2022.10.31.00":
+    url: "https://github.com/facebookincubator/fizz/releases/download/v2022.10.31.00/fizz-v2022.10.31.00.tar.gz"
+    sha256: "209b0b3e856cf93df574e859196fcc9ea15bb12aadf7d63b0f449bbbb3e5f985"
+patches:
+  "2022.10.31.00":
+    - patch_file: "patches/0001-find-packages.patch"
+      patch_description: "fix find_package"
+      patch_type: "conan"
