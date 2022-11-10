@@ -1,0 +1,72 @@
+diff --git a/wangle/CMakeLists.txt b/wangle/CMakeLists.txt
+index 85ae066f..888d36d0 100644
+--- a/wangle/CMakeLists.txt
++++ b/wangle/CMakeLists.txt
+@@ -66,7 +66,7 @@ find_package(folly CONFIG REQUIRED)
+ find_package(fizz CONFIG REQUIRED)
+ find_package(fmt CONFIG REQUIRED)
+ find_package(OpenSSL REQUIRED)
+-find_package(Glog REQUIRED)
++find_package(glog REQUIRED)
+ find_package(gflags CONFIG QUIET)
+ if (gflags_FOUND)
+   message(STATUS "Found gflags from package config")
+@@ -74,13 +74,31 @@ if (gflags_FOUND)
+ else()
+   find_package(Gflags REQUIRED)
+ endif()
+-find_package(LibEvent MODULE REQUIRED)
+-find_package(DoubleConversion REQUIRED)
++find_package(Libevent REQUIRED)
++find_package(double-conversion REQUIRED)
+ find_package(Threads REQUIRED)
+ if (UNIX AND NOT APPLE)
+   find_package(Librt)
+ endif()
+ 
++get_target_property(FIZZ_INCLUDE_DIR fizz::fizz INTERFACE_INCLUDE_DIRECTORIES)
++get_target_property(FOLLY_INCLUDE_DIR Folly::folly INTERFACE_INCLUDE_DIRECTORIES)
++set(OPENSSL_INCLUDE_DIR  ${openssl_INCLUDE_DIRS})
++get_target_property(GLOG_INCLUDE_DIRS glog::glog INTERFACE_INCLUDE_DIRECTORIES)
++get_target_property(GFLAGS_INCLUDE_DIRS gflags::gflags INTERFACE_INCLUDE_DIRECTORIES)
++set(LIBEVENT_INCLUDE_DIR ${libevent_INCLUDE_DIRS})
++get_target_property(DOUBLE_CONVERSION_INCLUDE_DIR double-conversion::double-conversion INTERFACE_INCLUDE_DIRECTORIES)
++
++
++get_target_property(FIZZ_LIBRARIES fizz::fizz INTERFACE_LINK_LIBRARIES)
++get_target_property(FOLLY_LIBRARIES Folly::folly INTERFACE_LINK_LIBRARIES)
++set(OPENSSL_LIBRARIES ${openssl_LIBRARIES})
++get_target_property(GLOG_LIBRARIES glog::glog INTERFACE_LINK_LIBRARIES)
++get_target_property(GFLAGS_LIBRARIES gflags::gflags INTERFACE_LINK_LIBRARIES)
++set(LIBEVENT_LIB ${libevent_LIBRARIES})
++get_target_property(DOUBLE_CONVERSION_LIBRARY double-conversion::double-conversion INTERFACE_LINK_LIBRARIES)
++
++
+ include(CheckAtomic)
+ 
+ set(WANGLE_HEADER_DIRS
+@@ -167,8 +185,8 @@ target_include_directories(
+     ${DOUBLE_CONVERSION_INCLUDE_DIR}
+ )
+ target_link_libraries(wangle PUBLIC
+-  ${FOLLY_LIBRARIES}
+   ${FIZZ_LIBRARIES}
++  ${FOLLY_LIBRARIES}
+   ${Boost_LIBRARIES}
+   ${OPENSSL_LIBRARIES}
+   ${GLOG_LIBRARIES}
+@@ -220,7 +238,13 @@ ENDIF(CMAKE_CROSSCOMPILING)
+ if(BUILD_TESTS)
+   enable_testing()
+ 
+-  find_package(GMock MODULE)
++  find_package(GTest MODULE)
++  find_package(GTest REQUIRED)
++  set(LIBGMOCK_LIBRARIES GTest::gmock)
++  get_target_property(LIBGTEST_INCLUDE_DIR GTest::gtest INTERFACE_INCLUDE_DIRECTORIES)
++  get_target_property(LIBGMOCK_INCLUDE_DIR GTest::gmock INTERFACE_INCLUDE_DIRECTORIES)
++
++  set(LIBGMOCK_FOUND GTest_FOUND)
+   if(NOT LIBGMOCK_FOUND)
+     include(ExternalProject)
+ 
