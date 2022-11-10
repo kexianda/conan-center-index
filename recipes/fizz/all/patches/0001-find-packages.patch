@@ -1,0 +1,107 @@
+diff --git a/fizz/CMakeLists.txt b/fizz/CMakeLists.txt
+index 5c8a575b..f9f3280b 100644
+--- a/fizz/CMakeLists.txt
++++ b/fizz/CMakeLists.txt
+@@ -47,26 +47,51 @@ set(CMAKE_INSTALL_DIR lib/cmake/fizz CACHE STRING
+     "The subdirectory where CMake package config files should be installed")
+ 
+ find_package(folly CONFIG REQUIRED)
++set(FOLLY_INCLUDE_DIR ${folly_INCLUDE_DIRS})
++set(FOLLY_LIBRARIES Folly::folly)
++
++
+ find_package(fmt CONFIG REQUIRED)
+ 
+ find_package(OpenSSL REQUIRED)
+-find_package(Glog REQUIRED)
+-find_package(DoubleConversion REQUIRED)
+-find_package(Threads REQUIRED)
+-find_package(Zstd REQUIRED)
++set(OPENSSL_INCLUDE_DIR ${OpenSSL_INCLUDE_DIRS})
++
++find_package(glog REQUIRED)
++set(GLOG_INCLUDE_DIRS ${glog_INCLUDE_DIRS})
++
++find_package(double-conversion REQUIRED)
++set(DOUBLE_CONVERSION_INCLUDE_DIR ${double-conversion_INCLUDE_DIRS})
++
++
++find_package(Threads REQUIRED) # ?
++
++find_package(zstd REQUIRED)
++set(ZSTD_INCLUDE_DIR  ${zstd_INCLUDE_DIRS})
++
++find_package(libsodium REQUIRED)
++set(sodium_INCLUDE_DIR  ${libsodium_INCLUDE_DIRS})
++set(sodium libsodium::libsodium)
++
++
++
+ if (UNIX AND NOT APPLE)
+   find_package(Librt)
+ endif()
+ 
+ include(CheckAtomic)
+ 
+-find_package(Sodium REQUIRED)
++find_package(libsodium REQUIRED)
+ 
+ SET(FIZZ_SHINY_DEPENDENCIES "")
+ SET(FIZZ_LINK_LIBRARIES "")
+ SET(FIZZ_INCLUDE_DIRECTORIES "")
+ 
+ find_package(gflags CONFIG QUIET)
++set(GFLAGS_LIBRARIES ${gflags_LIBRARIES})
++set(GFLAGS_INCLUDE_DIR ${gflags_INCLUDE_DIR})
++
++
++
+ if (gflags_FOUND)
+   message(STATUS "Found gflags from package config")
+   if (TARGET gflags-shared)
+@@ -252,7 +277,7 @@ target_link_libraries(fizz
+   PUBLIC
+     ${FOLLY_LIBRARIES}
+     ${OPENSSL_LIBRARIES}
+-    sodium
++    libsodium::libsodium
+     Threads::Threads
+     ZLIB::ZLIB
+     ${ZSTD_LIBRARY}
+@@ -317,8 +342,11 @@ ENDIF(CMAKE_CROSSCOMPILING)
+ SET(FIZZ_TEST_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+ 
+ if(BUILD_TESTS)
+-  find_package(GMock 1.8.0 MODULE REQUIRED)
+-  find_package(GTest 1.8.0 MODULE REQUIRED)
++  find_package(GTest REQUIRED)
++  set(LIBGMOCK_LIBRARIES GTest::gmock)
++  get_target_property(LIBGMOCK_DEFINES GTest::gmock INTERFACE_COMPILE_DEFINITIONS)
++  get_target_property(LIBGTEST_INCLUDE_DIR GTest::gtest INTERFACE_INCLUDE_DIRECTORIES)
++  get_target_property(LIBGMOCK_INCLUDE_DIR GTest::gmock INTERFACE_INCLUDE_DIRECTORIES)
+ endif()
+ 
+ add_library(fizz_test_support
+@@ -458,11 +486,11 @@ if(BUILD_TESTS)
+   add_gtest(test/HandshakeTest.cpp HandshakeTest)
+ endif()
+ 
+-option(BUILD_EXAMPLES "BUILD_EXAMPLES" ON)
++option(BUILD_EXAMPLES "BUILD_EXAMPLES" OFF)
+ 
+ if(BUILD_EXAMPLES)
+   add_executable(BogoShim test/BogoShim.cpp)
+-  target_link_libraries(BogoShim fizz sodium)
++  target_link_libraries(BogoShim fizz libsodium::libsodium)
+   set_target_properties(BogoShim PROPERTIES OUTPUT_NAME fizz-bogoshim)
+   install(
+     TARGETS BogoShim
+@@ -476,7 +504,7 @@ if(BUILD_EXAMPLES)
+       tool/FizzGenerateDelegatedCredentialCommand.cpp
+       tool/FizzServerBenchmarkCommand.cpp
+       tool/FizzServerCommand.cpp)
+-  target_link_libraries(FizzTool fizz sodium)
++  target_link_libraries(FizzTool fizz libsodium::libsodium)
+   set_target_properties(FizzTool PROPERTIES OUTPUT_NAME fizz)
+   install(
+     TARGETS FizzTool
