@@ -27,9 +27,11 @@ class FizzConan(ConanFile):
         self.requires(f"folly/{self.version}")
         self.requires("boost/1.78.0")
         self.requires("openssl/1.1.1l")
-        self.requires("gtest/1.10.0")
         self.requires("glog/0.4.0")
         self.requires("gflags/2.2.2")
+
+    def build_requirements(self):
+        self.test_requires("gtest/1.11.0")
 
     def export_sources(self):
         export_conandata_patches(self)
