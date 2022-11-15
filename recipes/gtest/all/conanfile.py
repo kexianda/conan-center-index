@@ -62,6 +62,11 @@ class GTestConan(ConanFile):
         if Version(self.version) >= "1.12.0" or self.settings.build_type != "Debug":
             del self.options.debug_postfix
 
+        if Version(self.version) < "1.12.0" and self.settings.build_type == "Debug":
+            if self.options.debug_postfix is None or self.options.debug_postfix == "deprecated":
+                # in 1.10.0,  use 'd' as default
+                self.default_options["debug_postfix"] = "d"
+
     def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
