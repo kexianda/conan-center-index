@@ -120,7 +120,7 @@ class ProxygenConan(ConanFile):
 
         self.cpp_info.components["proxygencurl"].libs = ["proxygencurl"]
         self.cpp_info.components["proxygencurl"].requires = ["proxygen"]
-        self.cpp_info.components["proxygencurl"].set_property("cmake_target_name", "proxygen0.::proxygen")
+        self.cpp_info.components["proxygencurl"].set_property("cmake_target_name", "proxygen::proxygencurl")
 
         # TODO: to remove in conan v2 once cmake_find_package_* & pkg_config generators removed
         self.cpp_info.components["proxygen"].names["cmake_find_package"] = "proxygen"
